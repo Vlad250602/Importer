@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Category;
 use App\Models\QueueStatus;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,11 +34,15 @@ class ImportCategoriesJob implements ShouldQueue
     {
 
         foreach ($this->categories_data as $category_data){
-            $category = Category::firstOrNew(['code' => $category_data['code']]);
-            $category->name = $category_data['name'];
-            $category->save();
-            $this->queue_stats->processed++;
-            $this->queue_stats->save();
+            try {
+                $category = Category::firstOrNew(['code' => $category_data['code']]);
+                $category->name = $category_data['name'];
+                $category->save();
+            } finally {
+                $this->queue_stats->processed++;
+                $this->queue_stats->save();
+            };
+
         }
         if ($this->queue_stats->total <= $this->queue_stats->processed){
             $this->queue_stats->total = 0;

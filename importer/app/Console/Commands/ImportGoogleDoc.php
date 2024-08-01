@@ -33,7 +33,7 @@ class ImportGoogleDoc extends Command
     {
         $product_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'products']);
 
-        if ($product_queue_stat->total === 0 || $product_queue_stat->total > $product_queue_stat->processed){
+        if ($product_queue_stat->total >= $product_queue_stat->processed){
 
             $products_data = $service->getDataFromSheets('products');
             $product_queue_stat->total = count($products_data);
@@ -45,7 +45,7 @@ class ImportGoogleDoc extends Command
 
         $category_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'categories']);
 
-        if ($category_queue_stat->total === 0 || $category_queue_stat->total > $category_queue_stat->processed) {
+        if ( $category_queue_stat->total >= $category_queue_stat->processed) {
 
             $categories_data = $service->getDataFromSheets('categories');
             $category_queue_stat->total = count($categories_data);

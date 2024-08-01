@@ -32,14 +32,17 @@ class ImportProductsJob implements ShouldQueue
     public function handle(): void
     {
         foreach ($this->products_data as $product_data){
+            try{
             $product = Product::firstOrNew(['code' => $product_data['code']]);
             $product->name = $product_data['name'];
             $product->price = floatval($product_data['price']);
             $product->status = $product_data['status'];
             $product->category_codes = $product_data['category-codes'];
             $product->save();
-            $this->queue_stats->processed++;
-            $this->queue_stats->save();
+            } finally {
+                $this->queue_stats->processed++;
+                $this->queue_stats->save();
+            };
         }
         if ($this->queue_stats->total <= $this->queue_stats->processed){
             $this->queue_stats->total = 0;
