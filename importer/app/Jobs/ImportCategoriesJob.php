@@ -33,18 +33,22 @@ class ImportCategoriesJob implements ShouldQueue
     public function handle(): void
     {
 
-        foreach ($this->categories_data as $category_data){
+        foreach ($this->categories_data as $category_data) {
             try {
-                $category = Category::firstOrNew(['code' => $category_data['code']]);
-                $category->name = $category_data['name'];
-                $category->save();
+                Category::updateOrCreate(
+                    [
+                        'code' => $category_data['code']
+                    ],
+                    [
+                        'name' => $category_data['name'],
+                    ]);
             } finally {
                 $this->queue_stats->processed++;
                 $this->queue_stats->save();
             };
 
         }
-        if ($this->queue_stats->total <= $this->queue_stats->processed){
+        if ($this->queue_stats->total <= $this->queue_stats->processed) {
             $this->queue_stats->total = 0;
             $this->queue_stats->processed = 0;
             $this->queue_stats->save();

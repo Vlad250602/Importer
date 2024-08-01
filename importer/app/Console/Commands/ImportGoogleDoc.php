@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\ImportCategoriesJob;
 use App\Jobs\ImportProductsJob;
+use App\Models\Product;
 use App\Models\QueueStatus;
 use App\Services\GoogleSheets\GoogleSheetsService;
 use Illuminate\Console\Command;
@@ -31,27 +32,28 @@ class ImportGoogleDoc extends Command
      */
     public function handle(GoogleSheetsService $service)
     {
-        $product_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'products']);
-
-        if ($product_queue_stat->total >= $product_queue_stat->processed){
-
-            $products_data = $service->getDataFromSheets('products');
-            $product_queue_stat->total = count($products_data);
-            $product_queue_stat->save();
-            foreach (array_chunk($products_data,5) as $product_chunk){
-                ImportProductsJob::dispatch($product_chunk,$product_queue_stat)->onQueue('products');
-            }
-        }
-
         $category_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'categories']);
 
-        if ( $category_queue_stat->total >= $category_queue_stat->processed) {
+        if ($category_queue_stat->total >= $category_queue_stat->processed) {
 
             $categories_data = $service->getDataFromSheets('categories');
             $category_queue_stat->total = count($categories_data);
             $category_queue_stat->save();
             foreach (array_chunk($categories_data, 5) as $categories_chunk) {
-                ImportCategoriesJob::dispatch($categories_chunk,$category_queue_stat)->onQueue('categories');
+                ImportCategoriesJob::dispatch($categories_chunk, $category_queue_stat)->onQueue('categories');
+            }
+
+        }
+
+        $product_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'products']);
+
+        if ($product_queue_stat->total >= $product_queue_stat->processed) {
+
+            $products_data = $service->getDataFromSheets('products');
+            $product_queue_stat->total = count($products_data);
+            $product_queue_stat->save();
+            foreach (array_chunk($products_data, 5) as $product_chunk) {
+                ImportProductsJob::dispatch($product_chunk, $product_queue_stat)->onQueue('products');
             }
         }
 

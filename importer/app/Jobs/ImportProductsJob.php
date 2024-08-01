@@ -33,12 +33,17 @@ class ImportProductsJob implements ShouldQueue
     {
         foreach ($this->products_data as $product_data){
             try{
-            $product = Product::firstOrNew(['code' => $product_data['code']]);
-            $product->name = $product_data['name'];
-            $product->price = floatval($product_data['price']);
-            $product->status = $product_data['status'];
-            $product->category_codes = $product_data['category-codes'];
-            $product->save();
+                Product::updateOrCreate(
+                    [
+                        'code' => $product_data['code']
+                    ],
+                    [
+                        'name'           => $product_data['name'],
+                        'price'          => floatval($product_data['price']),
+                        'status'         => $product_data['status'],
+                        'category_codes' => $product_data['category-codes']
+                    ]);
+
             } finally {
                 $this->queue_stats->processed++;
                 $this->queue_stats->save();
