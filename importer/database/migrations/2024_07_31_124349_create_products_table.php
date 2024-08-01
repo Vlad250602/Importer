@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('name');
             $table->decimal('price', total: 8, places: 2);
-            $table->enum('status',['H','A']);
-            $table->text('category-codes');
+            $table->enum('status',['D','A','H'])->default('D');
+            $table->text('category_codes');
             $table->timestamps();
         });
     }
