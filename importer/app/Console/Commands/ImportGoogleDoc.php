@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\ImportCategoriesJob;
 use App\Jobs\ImportProductsJob;
+use App\Models\QueueStatus;
 use App\Services\GoogleSheets\GoogleSheetsService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
@@ -30,14 +31,28 @@ class ImportGoogleDoc extends Command
      */
     public function handle(GoogleSheetsService $service)
     {
-        $data = $service->getDataFromSheets();
+        $product_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'products']);
 
-        foreach (array_chunk($data['products'],5) as $product_chunk){
-            ImportProductsJob::dispatch($product_chunk)->onQueue('products');
+        if ($product_queue_stat->total === 0 || $product_queue_stat->total > $product_queue_stat->processed){
+
+            $products_data = $service->getDataFromSheets('products');
+            $product_queue_stat->total = count($products_data);
+            $product_queue_stat->save();
+            foreach (array_chunk($products_data,5) as $product_chunk){
+                ImportProductsJob::dispatch($product_chunk,$product_queue_stat)->onQueue('products');
+            }
         }
 
-        foreach (array_chunk($data['categories'],5) as $categories_chunk){
-            ImportCategoriesJob::dispatch($categories_chunk)->onQueue('categories');
+        $category_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'categories']);
+
+        if ($category_queue_stat->total === 0 || $category_queue_stat->total > $category_queue_stat->processed) {
+
+            $categories_data = $service->getDataFromSheets('categories');
+            $category_queue_stat->total = count($categories_data);
+            $category_queue_stat->save();
+            foreach (array_chunk($categories_data, 5) as $categories_chunk) {
+                ImportCategoriesJob::dispatch($categories_chunk,$category_queue_stat)->onQueue('categories');
+            }
         }
 
         $this->info('Jobs has been added to queues');
