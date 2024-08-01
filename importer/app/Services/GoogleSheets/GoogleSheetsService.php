@@ -16,7 +16,11 @@ class GoogleSheetsService
         $this->categories_sheet_url = 'https://docs.google.com/spreadsheets/d/1qAbpynrxbMvJSRwgNA7g4MEXUzSBr-rLMRi2APwGdpo/export?format=csv&gid=2111825381#gid=2111825381';
     }
 
-    public function getDataFromSheets(){
+    public function getDataFromSheets($type = ''){
+        if (!empty($type)){
+            return $this->parseCSV($type);
+        }
+
         $data['products'] = $this->parseCSV('products');
         $data['categories'] = $this->parseCSV('categories');
 
