@@ -16,16 +16,59 @@ class GoogleSheetsService
         $this->categories_sheet_url = 'https://docs.google.com/spreadsheets/d/1qAbpynrxbMvJSRwgNA7g4MEXUzSBr-rLMRi2APwGdpo/export?format=csv&gid=2111825381#gid=2111825381';
     }
 
-    public function simple(){
-        return 'service';
+    public function getDataFromSheets(){
+        $data['products'] = $this->parseCSV('products');
+        $data['categories'] = $this->parseCSV('categories');
+
+        return $data;
+
     }
 
-    public function getDataFromSheets(){
-        $file = fopen($this->products_sheet_url,"r");
+    private function parseCSV($type){
+
+        $result = [];
+
+        if ($type == 'categories'){
+            $file = fopen($this->categories_sheet_url,"r");
+
+        } elseif($type == 'products'){
+            $file = fopen($this->products_sheet_url,"r");
+
+        } else {
+            return $result;
+        }
 
         $columns = fgetcsv($file);
 
-        print_r(fgetcsv($file));
-        print_r(fgetcsv($file));
+        $counter = 0;
+
+        while (($row = fgetcsv($file)) !== FALSE) {
+            foreach ($columns as $key => $column){
+                $result[$counter][$column] = $row[$key];
+            }
+            $counter++;
+        }
+        return $result;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
