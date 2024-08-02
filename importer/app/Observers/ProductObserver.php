@@ -26,6 +26,12 @@ class ProductObserver
             'auto',
             $product->getOriginal('category_codes')
         );
+
+        if ($product->getAttribute('price') == 0){
+            $product->setAttribute('status','H');
+            $product->updateQuietly();
+        }
+
     }
 
     /**
@@ -33,7 +39,7 @@ class ProductObserver
      */
     public function deleted(Product $product): void
     {
-        //
+        $this->changeCategoryProductCount($product->getAttribute('category_codes'),'remove');
     }
 
     /**
@@ -41,7 +47,11 @@ class ProductObserver
      */
     public function restored(Product $product): void
     {
-        //
+        $this->changeCategoryProductCount(
+            $product->getAttribute('category_codes'),
+            'auto',
+            $product->getOriginal('category_codes')
+        );
     }
 
     /**
@@ -49,26 +59,37 @@ class ProductObserver
      */
     public function forceDeleted(Product $product): void
     {
-        //
+        $this->changeCategoryProductCount($product->getAttribute('category_codes'),'remove');
     }
 
     private function changeCategoryProductCount($category_codes, $type = 'auto', $old_category_codes = []){
 
-
         if ($type == 'auto'){
-            $categories = Category::whereIn('code', explode(',',preg_replace('/\s+/', '', $old_category_codes)))->get();
+
+            $removed_categories = array_diff(
+                explode(',',preg_replace('/\s+/', '', $old_category_codes)),
+                explode(',',preg_replace('/\s+/', '', $category_codes))
+            );
+
+            $new_categories = array_diff(
+                explode(',',preg_replace('/\s+/', '', $category_codes)),
+                explode(',',preg_replace('/\s+/', '', $old_category_codes))
+            );
+
+            $categories = Category::whereIn('code', $removed_categories)->get();
 
             foreach ($categories as $category){
                 $category->count_products -= 1;
                 $category->save();
             }
 
+            $categories = Category::whereIn('code', $new_categories)->get();
 
-            $categories = Category::whereIn('code', explode(',',preg_replace('/\s+/', '', $category_codes)))->get();
             foreach ($categories as $category){
                 $category->count_products += 1;
                 $category->save();
             }
+
         } else {
             $quantity_change = 1;
             if ($type == 'remove'){
