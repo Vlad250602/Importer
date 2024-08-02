@@ -40,9 +40,8 @@ class ImportGoogleDoc extends Command
             $category_queue_stat->total = count($categories_data);
             $category_queue_stat->save();
             foreach (array_chunk($categories_data, 5) as $categories_chunk) {
-                ImportCategoriesJob::dispatch($categories_chunk, $category_queue_stat)->onQueue('categories');
+                ImportCategoriesJob::dispatchSync($categories_chunk, $category_queue_stat);
             }
-
         }
 
         $product_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'products']);

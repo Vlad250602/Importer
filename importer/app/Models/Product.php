@@ -5,14 +5,21 @@ namespace App\Models;
 use App\Observers\ProductObserver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[ObservedBy([ProductObserver::class])]
 class Product extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'product_id';
 
-    protected $fillable = ['code','name','price','status', 'category_codes'];
+    protected $fillable = ['code','name','price','status'];
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(ProductCategory::class);
+    }
+
+
 
 }

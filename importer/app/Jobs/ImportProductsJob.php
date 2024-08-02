@@ -2,13 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\QueueStatus;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class ImportProductsJob implements ShouldQueue
 {
@@ -33,16 +36,30 @@ class ImportProductsJob implements ShouldQueue
     {
         foreach ($this->products_data as $product_data){
             try{
-                Product::updateOrCreate(
+                /** @var Product $product */
+                $product = Product::updateOrCreate(
                     [
                         'code' => $product_data['code']
                     ],
                     [
                         'name'           => $product_data['name'],
-                        'price'          => floatval($product_data['price']),
+                        'price'          => strlen($product_data['price']) == 0  ? null : floatval($product_data['price']),
                         'status'         => $product_data['status'],
-                        'category_codes' => $product_data['category-codes']
                     ]);
+
+                $product_category_codes = explode(',',preg_replace('/\s+/', '', $product_data['category-codes']));
+
+                if (!empty($product_category_codes) && $product){
+                    $categories = Category::whereIn('code', $product_category_codes)->get();
+
+                    $product->categories()->delete();
+
+                    if (!empty($categories)){
+                        foreach ($categories as $category){
+                            $product->categories()->create(['category_id' => $category->id]);
+                        }
+                    }
+                }
 
             } finally {
                 $this->queue_stats->processed++;
