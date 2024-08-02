@@ -9,6 +9,7 @@ use App\Models\QueueStatus;
 use App\Services\GoogleSheets\GoogleSheetsService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 
 
 class ImportGoogleDoc extends Command
@@ -42,6 +43,8 @@ class ImportGoogleDoc extends Command
             foreach (array_chunk($categories_data, 5) as $categories_chunk) {
                 ImportCategoriesJob::dispatchSync($categories_chunk, $category_queue_stat);
             }
+
+
         }
 
         $product_queue_stat = QueueStatus::firstOrCreate(['queue_name' => 'products']);
@@ -55,7 +58,7 @@ class ImportGoogleDoc extends Command
                 ImportProductsJob::dispatch($product_chunk, $product_queue_stat)->onQueue('products');
             }
         }
-
+        echo PHP_EOL . Cache::get('active_products') . PHP_EOL;
         $this->info('Jobs has been added to queues');
     }
 }

@@ -9,7 +9,7 @@ class ProductCategory extends Model
 {
     use HasFactory;
 
-    protected $table = 'products_categories';
+    protected $table = 'product_category';
 
     protected $fillable = ['product_id', 'category_id'];
     public $timestamps = false;

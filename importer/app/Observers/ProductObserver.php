@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use Illuminate\Support\Facades\Cache;
 
 class ProductObserver
 {
@@ -14,6 +15,8 @@ class ProductObserver
     public function created(Product $product): void
     {
         $this->checkEmptyProductPrice($product);
+        Cache::set('active_products', Product::where('status', 'A')->count());
+
     }
 
     /**
@@ -21,7 +24,10 @@ class ProductObserver
      */
     public function updated(Product $product): void
     {
+
         $this->checkEmptyProductPrice($product);
+
+        Cache::set('active_products', Product::where('status', 'A')->count());
     }
 
     /**
@@ -29,6 +35,7 @@ class ProductObserver
      */
     public function deleted(Product $product): void
     {
+        Cache::set('active_products', Product::where('status', 'A')->count());
 
     }
 
@@ -50,9 +57,12 @@ class ProductObserver
 
     private function checkEmptyProductPrice(Product $product){
         $price = $product->getAttribute('price');
+
         if (empty($price)){
-            $product->updateQuietly(['status' => 'H']);
+            $temp = Product::findOrFail($product->id);
+            $temp->updateQuietly(['status' => 'H']);
         }
     }
 
+    
 }

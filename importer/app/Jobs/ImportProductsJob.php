@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ImportProductsJob implements ShouldQueue
@@ -50,14 +51,10 @@ class ImportProductsJob implements ShouldQueue
                 $product_category_codes = explode(',',preg_replace('/\s+/', '', $product_data['category-codes']));
 
                 if (!empty($product_category_codes) && $product){
-                    $categories = Category::whereIn('code', $product_category_codes)->get();
+                    $category_ids = Category::whereIn('code', $product_category_codes)->pluck('id')->toArray();
 
-                    $product->categories()->delete();
-
-                    if (!empty($categories)){
-                        foreach ($categories as $category){
-                            $product->categories()->create(['category_id' => $category->id]);
-                        }
+                    if (!empty($category_ids)){
+                        $product->categories()->sync($category_ids);
                     }
                 }
 
@@ -66,6 +63,10 @@ class ImportProductsJob implements ShouldQueue
                 $this->queue_stats->save();
             };
         }
+
+        $active_product_count = count(Product::where('status', 'A')->get());
+        Cache::set('active_products', $active_product_count);
+
         if ($this->queue_stats->total <= $this->queue_stats->processed){
             $this->queue_stats->total = 0;
             $this->queue_stats->processed = 0;
