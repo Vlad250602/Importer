@@ -27,6 +27,6 @@ class DeleteCategoriesWithoutProducts extends Command
      */
     public function handle()
     {
-        print_r(Category::doesntHave('products')->pluck('id')->toArray());
+        Category::doesntHave('products')->delete();
     }
 }

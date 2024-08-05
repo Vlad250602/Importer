@@ -15,7 +15,10 @@ class ProductObserver
     public function created(Product $product): void
     {
         $this->checkEmptyProductPrice($product);
-        Cache::set('active_products', Product::where('status', 'A')->count());
+
+        $this->updateCategoriesProductCount();
+
+        $this->updateActiveProductsCountCache();
 
     }
 
@@ -24,10 +27,11 @@ class ProductObserver
      */
     public function updated(Product $product): void
     {
-
         $this->checkEmptyProductPrice($product);
 
-        Cache::set('active_products', Product::where('status', 'A')->count());
+        $this->updateCategoriesProductCount();
+
+        $this->updateActiveProductsCountCache();
     }
 
     /**
@@ -35,25 +39,10 @@ class ProductObserver
      */
     public function deleted(Product $product): void
     {
-        Cache::set('active_products', Product::where('status', 'A')->count());
-
+        $this->updateActiveProductsCountCache();
+        $this->updateCategoriesProductCount();
     }
 
-    /**
-     * Handle the Product "restored" event.
-     */
-    public function restored(Product $product): void
-    {
-
-    }
-
-    /**
-     * Handle the Product "force deleted" event.
-     */
-    public function forceDeleted(Product $product): void
-    {
-
-    }
 
     private function checkEmptyProductPrice(Product $product){
         $price = $product->getAttribute('price');
@@ -64,5 +53,15 @@ class ProductObserver
         }
     }
 
-    
+    private function updateActiveProductsCountCache(){
+        Cache::set('active_products', Product::where('status', 'A')->count());
+    }
+
+    private function updateCategoriesProductCount(){
+        $categories = Category::withCount('products')->get();
+
+        foreach ($categories as $category){
+            $category->update(['count_products' => $category->products_count]);
+        }
+    }
 }

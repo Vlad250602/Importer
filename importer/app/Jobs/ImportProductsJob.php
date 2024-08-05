@@ -64,9 +64,6 @@ class ImportProductsJob implements ShouldQueue
             };
         }
 
-        $active_product_count = count(Product::where('status', 'A')->get());
-        Cache::set('active_products', $active_product_count);
-
         if ($this->queue_stats->total <= $this->queue_stats->processed){
             $this->queue_stats->total = 0;
             $this->queue_stats->processed = 0;
