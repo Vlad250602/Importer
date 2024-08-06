@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\Product;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -14,12 +15,13 @@ class ProductUpdate
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public Product $product;
     /**
      * Create a new event instance.
      */
-    public function __construct()
+    public function __construct(Product $product)
     {
-        //
+        $this->product = $product;
     }
 
     /**
